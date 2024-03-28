@@ -13,6 +13,8 @@ pygame.display.set_caption("Wordle")
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREY = (128, 128, 128)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
 
 #FONTS 
 
@@ -22,9 +24,10 @@ TITLE_FONT.italic = True
 
 #GAME VARIABLES
 GUESS_LIMIT = 6
-WORD_LENGTH = 7
-number_of_guesses = 0
 current_guess = []
+
+WORD_LENGTH = 7
+correct_word = ["B", "A", "A", "A", "A", "A", "B"]
 
 grid_rectangles = []
 
@@ -49,6 +52,10 @@ class Letter:
 
         if self.outline_color != None:
             pygame.draw.rect(WIN, self.outline_color, letter_rect, width = 1)
+        else: 
+            pygame.draw.rect(WIN, self.background_color, letter_rect)
+
+        
 
     def type_guess(self, character): 
 
@@ -77,11 +84,7 @@ class Letter:
             return True
         
         return False
-
-
-
-
-
+    
 
 def draw_window(): 
     
@@ -112,44 +115,79 @@ def initialize_rectangles():
         grid_rectangles.append(row)
         start_y += 55 
 
+def enter_guess(row): 
+
+        
+        for i in range(7):
+            current_letter = grid_rectangles[row][i]
+            if current_guess[i] == correct_word[i]:
+                current_letter.background_color = GREEN
+            elif current_guess[i] in correct_word: 
+                current_letter.background_color = YELLOW
+            else: 
+                current_letter.background_color = GREY
+            current_letter.outline_color = None
+
+        if current_guess == correct_word: 
+            return True
+
+        return False
+
 def main():
     
     clock = pygame.time.Clock()
     run = True
 
     initialize_rectangles()
+    
+    is_guess_successful = False
+    is_deletion_successful = False
 
     current_guess_row = 0
     current_guess_col = 0
-    
-    is_guess_successful = False
-    is_deletion_successful = True
+    number_of_guesses = 0
     
     while run: 
         clock.tick(FPS)
+        if number_of_guesses >= GUESS_LIMIT: 
+            run = False
         for event in pygame.event.get(): 
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
             if event.type == pygame.KEYDOWN: 
-                if event.key == pygame.K_a and current_guess_col < 7: 
+                if event.key == pygame.K_a and current_guess_col < 7:
                     current_letter = grid_rectangles[current_guess_row][current_guess_col]
                     is_guess_successful = current_letter.type_guess("A")
                     if is_guess_successful:
                         current_guess_col += 1
+                if event.key == pygame.K_b and current_guess_col < 7: 
+                    current_letter = grid_rectangles[current_guess_row][current_guess_col]
+                    is_guess_successful = current_letter.type_guess("B")
+                    if is_guess_successful:
+                        current_guess_col += 1
+                if event.key == pygame.K_c and current_guess_col < 7: 
+                    current_letter = grid_rectangles[current_guess_row][current_guess_col]
+                    is_guess_successful = current_letter.type_guess("C")
+                    if is_guess_successful:
+                        current_guess_col += 1         
                 if event.key == pygame.K_BACKSPACE and current_guess_col > 0: 
+                    current_letter = grid_rectangles[current_guess_row][current_guess_col - 1]
+                    is_deletion_successful = current_letter.delete_guess()
                     if is_deletion_successful: 
                         current_guess_col -= 1
-                    current_letter = grid_rectangles[current_guess_row][current_guess_col]
-                    is_deletion_successful = current_letter.delete_guess()
-
-
-
-        
-        
-
-            
-        
+                if event.key == pygame.K_RETURN and current_guess_col == 7:
+                    is_guess_correct = enter_guess(current_guess_row)
+                    if is_guess_correct == True: 
+                        print("YOU WON")
+                    else: 
+                        current_guess.clear()
+                        current_guess_row += 1
+                        number_of_guesses += 1
+                        is_guess_successful = False
+                        is_deletion_successful = False
+                        current_guess_col = 0
+                
         draw_window()
 
 if __name__ == "__main__": 
