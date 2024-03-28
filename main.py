@@ -123,7 +123,7 @@ def main():
     current_guess_col = 0
     
     is_guess_successful = False
-    is_deletion_successful = False
+    is_deletion_successful = True
     
     while run: 
         clock.tick(FPS)
@@ -138,10 +138,10 @@ def main():
                     if is_guess_successful:
                         current_guess_col += 1
                 if event.key == pygame.K_BACKSPACE and current_guess_col > 0: 
-                    current_letter = grid_rectangles[current_guess_row][current_guess_col]
-                    is_deletion_successful = current_letter.delete_guess()
                     if is_deletion_successful: 
                         current_guess_col -= 1
+                    current_letter = grid_rectangles[current_guess_row][current_guess_col]
+                    is_deletion_successful = current_letter.delete_guess()
 
 
 
