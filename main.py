@@ -1,5 +1,6 @@
 import pygame
 import os
+import random
 
 pygame.init()
 pygame.font.init()
@@ -13,6 +14,7 @@ pygame.display.set_caption("Wordle")
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREY = (128, 128, 128)
+LIGHT_GREY = (211, 211, 211)
 GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
 
@@ -20,6 +22,7 @@ YELLOW = (255, 255, 0)
 
 TITLE_FONT = pygame.font.SysFont('broadway', 40)
 LETTER_FONT = pygame.font.SysFont('helvetica', 35)
+ENTER_FONT = pygame.font.SysFont('helvetica', 35)
 TITLE_FONT.italic = True
 
 #GAME VARIABLES
@@ -27,9 +30,23 @@ GUESS_LIMIT = 6
 current_guess = []
 
 WORD_LENGTH = 7
-correct_word = ["B", "A", "A", "A", "A", "A", "B"]
+POSSIBLE_WORDS = ["CAPTURE", "SUPPOSE", "FREEDOM", "CONTROL", "MACHINE", "JUSTICE", "CONDUCT", "PROCEED", "ARRANGE", "OPPOSE", "LIBRARY", 
+                      "COLLECT", "CENTRAL", "PRESENT", "COMFORT", "DESTROY", "DISCUSS", "JOURNEY", "NETWORK", "PERFORM", "EXPRESS", "PROTECT", 
+                      "ACCOUNT", "REQUIRE", "CONTAIN", "ADDRESS", "HISTORY", "EXPLAIN", "MESSAGE", "PROBLEM", "PERFECT", "COMPANY", "CERTAIN", 
+                      "PRODUCT", "MENTION", "ELEMENT", "MEASURE", "MISSION", "GENERAL", "CITIZEN", "SERVICE", "FEATURE", "PROMISE", "CONTACT", 
+                      "FEATURES", "CAPTURED", "MEASURED", "PREVIOUS", "ANALYSIS", "SYSTEMS", "MOMENTS", "CONVINCE", "DISCOVER", "BROADCAST", 
+                      "CONFUSE", "PRAISED", "INTRIGUE", "PROMOTE", "FAVORITE", "LANGUAGE", "REACTION", "MISTAKE", "CORRECT", "MILEAGE", "PLUMMET", 
+                      "SCHEDULE", "BROUGHT", "REFUGEE", "FRIENDS", "OFFENSE", "FOCUSED", "LEADING", "OBSERVE", "OVERSEE", "ALLOWS", "ACCEPT", 
+                      "DISTANT", "EMOTION", "PERHAPS", "CHOICES", "ATTEMPT", "REMARKS", "REMINDS", "REQUEST", "REPLIES", "CONTENT", "EXAMPLE", 
+                      "EXTREME", "INSIGHT", "LIMITED", "RECENT", "SYMBOL", "VERSION"]
+random_word_index = random.randint(0, 99)
+correct_word = list(POSSIBLE_WORDS[random_word_index])
+print(correct_word)
+
+SUPPORTED_CHARACTERS = ["Q","W","E","R","T","Y","U","I","O","P","A","S","D","F","G","H","J","K","L","ENTER","Z","X","C","V","B","N","M","<"]
 
 grid_rectangles = []
+grid_buttons = []
 
 #MISC
 FPS = 60
@@ -84,7 +101,27 @@ class Letter:
             return True
         
         return False
-    
+class Button: 
+    def __init__(self, left_x, top_y, character, width): 
+        self.foreground_color = BLACK
+        self.background_color = LIGHT_GREY
+        self.character = character
+        self.button_text = LETTER_FONT.render(self.character, 1, self.foreground_color)
+        self.left_x = left_x
+        self.top_y = top_y
+        self.width = width
+        self.HEIGHT = 60
+        self.button_rect = pygame.Rect(self.left_x, self.top_y, self.width, self.HEIGHT)
+
+    def draw(self): 
+
+        pygame.draw.rect(WIN, self.background_color, self.button_rect)
+        if self.character == "ENTER": 
+            WIN.blit(self.button_text, (self.left_x + (self.width / 2) - 50, self.top_y + 10))
+        else: 
+            WIN.blit(self.button_text, (self.left_x + (self.width / 2) - 10, self.top_y + 10))
+
+
 
 def draw_window(): 
     
@@ -92,6 +129,10 @@ def draw_window():
 
     TITLE_TEXT = TITLE_FONT.render("Wordle", 1, BLACK)
     WIN.blit(TITLE_TEXT, (WIDTH // 2 - TITLE_TEXT.get_width() // 2, 25))
+
+    for row in grid_buttons: 
+        for col in row: 
+            col.draw()
 
     for row in grid_rectangles: 
         for col in row: 
@@ -113,7 +154,42 @@ def initialize_rectangles():
             row.append(new_letter)
             start_x += 55
         grid_rectangles.append(row)
-        start_y += 55 
+        start_y += 55
+
+        button_y = 450
+        button_x = 20
+        row1 = []
+        for i in range(10):
+            new_button = Button(button_x, button_y, SUPPORTED_CHARACTERS[i], 50)
+            row1.append(new_button)
+            button_x += 55
+        grid_buttons.append(row1)
+
+        button_y = 520
+        button_x = 50
+        row2 = []
+        for i in range(10, 19):
+            new_button = Button(button_x, button_y, SUPPORTED_CHARACTERS[i], 50)
+            row2.append(new_button)
+            button_x += 55
+        grid_buttons.append(row2)
+
+        
+
+        button_y = 590
+        button_x = 20
+        row3 = []
+        enter_button = Button(button_x, button_y, SUPPORTED_CHARACTERS[19], 120)
+        row3.append(enter_button)
+        button_x += 125
+        for i in range(20, 28):
+            new_button = Button(button_x, button_y, SUPPORTED_CHARACTERS[i], 50)
+            row3.append(new_button)
+            button_x += 55
+        grid_buttons.append(row3)
+
+ 
+
 
 def enter_guess(row): 
 
@@ -133,12 +209,14 @@ def enter_guess(row):
 
         return False
 
+
 def main():
     
     clock = pygame.time.Clock()
     run = True
 
     initialize_rectangles()
+
     
     is_guess_successful = False
     is_deletion_successful = False
@@ -155,38 +233,41 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
-            if event.type == pygame.KEYDOWN: 
-                if event.key == pygame.K_a and current_guess_col < 7:
-                    current_letter = grid_rectangles[current_guess_row][current_guess_col]
-                    is_guess_successful = current_letter.type_guess("A")
-                    if is_guess_successful:
-                        current_guess_col += 1
-                if event.key == pygame.K_b and current_guess_col < 7: 
-                    current_letter = grid_rectangles[current_guess_row][current_guess_col]
-                    is_guess_successful = current_letter.type_guess("B")
-                    if is_guess_successful:
-                        current_guess_col += 1
-                if event.key == pygame.K_c and current_guess_col < 7: 
-                    current_letter = grid_rectangles[current_guess_row][current_guess_col]
-                    is_guess_successful = current_letter.type_guess("C")
-                    if is_guess_successful:
-                        current_guess_col += 1         
-                if event.key == pygame.K_BACKSPACE and current_guess_col > 0: 
-                    current_letter = grid_rectangles[current_guess_row][current_guess_col - 1]
-                    is_deletion_successful = current_letter.delete_guess()
-                    if is_deletion_successful: 
-                        current_guess_col -= 1
-                if event.key == pygame.K_RETURN and current_guess_col == 7:
-                    is_guess_correct = enter_guess(current_guess_row)
-                    if is_guess_correct == True: 
-                        print("YOU WON")
-                    else: 
-                        current_guess.clear()
-                        current_guess_row += 1
-                        number_of_guesses += 1
-                        is_guess_successful = False
-                        is_deletion_successful = False
-                        current_guess_col = 0
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                character_input  = None
+                for row in grid_buttons: 
+                    for col in row: 
+                        if col.button_rect.collidepoint(event.pos): 
+                            character_input = col.character
+
+                if character_input != None:
+                    if character_input == "ENTER": 
+                        if current_guess_col != 7: 
+                            break
+                        is_guess_correct = enter_guess(current_guess_row)
+                        if is_guess_correct == True: 
+                            print("YOU WON")
+                        else: 
+                            current_guess.clear()
+                            current_guess_row += 1
+                            number_of_guesses += 1
+                            is_guess_successful = False
+                            is_deletion_successful = False
+                            current_guess_col = 0
+                    elif character_input == "<":
+                        if current_guess_col <= 0: 
+                            break
+                        else: 
+                            current_letter = grid_rectangles[current_guess_row][current_guess_col - 1]
+                            is_deletion_successful = current_letter.delete_guess()
+                            if is_deletion_successful: 
+                                current_guess_col -= 1 
+                    else:
+                        current_letter = grid_rectangles[current_guess_row][current_guess_col]
+                        is_guess_successful = current_letter.type_guess(character_input)
+                        if is_guess_successful:
+                            current_guess_col += 1
                 
         draw_window()
 
